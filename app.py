@@ -1,45 +1,36 @@
+from flask import Flask, request, jsonify, render_template
 import joblib
-from flask import Flask, request, json, jsonify
-from werkzeug.exceptions import HTTPException
-
-MODEL_PATH = "models/model.joblib"
+import numpy as np
 
 app = Flask(__name__)
 
-def make_prediction(fixed_acidity, volatile_acidit ,citric_acid,*
-                    residual_sugar ,chlorides, free_sulfur_dioxide,	
-                    total_sulfur_dioxide, density ,pH ,sulphates ,alcohol):
-    """Return a prediction with our regression model.
-    """
-    # Load model
-    regressor = joblib.load(MODEL_PATH)
-    # Make prediction (the regressor expects a 2D array that is why we put year
-    # in a list of list) and return it
-    prediction = regressor.predict([[fixed_acidity, volatile_acidit ,citric_acid,*
-                    residual_sugar ,chlorides, free_sulfur_dioxide,	
-                    total_sulfur_dioxide, density ,pH ,sulphates ,alcohol]])
-    return prediction[0]
-
-
-@app.route("/predict", methods=["POST"])
+@app.route("/predict", methods=["POST","GET"])
 def predict():
-    # Check parameters
-    if request.json:
-        # Get JSON as dictionnary
-        json_input = request.get_json()
-        # Call our predict function that handle loading model and making a
-        # prediction
-        prediction = make_prediction(float(json_input[['fixed_acidity', 'volatile_acidit' ,'citric_acid',*
-                    'residual_sugar' ,'chlorides', 'free_sulfur_dioxide',	
-                    'total_sulfur_dioxide', 'density' ,'pH' ,'sulphates' ,'alcohol']]))
-        # Return prediction
-        response = {
-            # Since prediction is a float and jsonify function can't handle
-            # floats we need to convert it to string
-            "prediction": str(prediction),
-        }
-        return jsonify(response), 200
+    # Check if request has a JSON content and if it is a POST method
+    if request.method == "POST" and request.is_json:
+        # Get the JSON as dictionnary
+        req = request.get_json()
+        
+        # Check mandatory key
+        if "input" in req.keys() :
+            # Load model
+            regressor = joblib.load("model.joblib")
+            #prepare the data
+            inp=np.array(req["input"])
+            # Predict
+            prediction = regressor.predict(inp)
+            # Return the result as JSON but first we need to transform the
+            # result so as to be serializable by jsonify()
+            prediction = prediction.tolist()
+            return jsonify({"The note will be": prediction}), 200
+        else:
+            return jsonify({"msg": "No Input key found in your request"})
 
+    elif request.method == "GET":
+        return jsonify({"msg": "Only the POST Methods are accepted"}), 200
+    else:
+        return jsonify({"msg": "Error: not a JSON in your request"})
 
+ 
 if __name__ == "__main__":
     app.run(debug=True)
