@@ -31,10 +31,6 @@ def predict():
     else:
         return jsonify({"msg": "Error: not a JSON in your request"})
 
-@app.route("/")
-def index():
-    return render_template("index.html")
-
  
 if __name__ == "__main__":
     app.run(debug=True)
