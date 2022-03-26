@@ -1,1 +1,6 @@
 .env
+01_Machine_learning_with_Flask
+02-Document_your_API
+03-Bonus_Dockerize_your_API
+models
+Model_Training.ipynb
